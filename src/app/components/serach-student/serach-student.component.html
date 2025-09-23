@@ -1,0 +1,91 @@
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Search Student</h2>
+
+  <div class="card shadow p-4">
+
+
+    <div class="row mb-3 align-items-center">
+      <label for="studentId" class="col-sm-2 col-form-label fw-bold">Student ID</label>
+      <div class="col-sm-6">
+        <input type="number" class="form-control" [(ngModel)]="studentId" id="studentId"
+          placeholder="Enter Student ID" />
+      </div>
+      <div class="col-sm-4">
+        <button class="btn btn-primary w-100" (click)="searchStudent()">
+          Search
+        </button>
+      </div>
+    </div>
+
+
+    <div *ngIf="studentFound" class="mt-4">
+      <h4 class="mb-3">Student Details</h4>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">Name:</div>
+        <div class="col-sm-9">{{student.studentName}}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">Father Name:</div>
+        <div class="col-sm-9">{{ student.fatherName }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">DOB:</div>
+        <div class="col-sm-9">{{ student.dateOfBirth }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">Gender:</div>
+        <div class="col-sm-9">{{ student.gender }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">NRC No:</div>
+        <div class="col-sm-9">{{ student.nrcNo }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">Grade:</div>
+        <div class="col-sm-9">{{ student.grade }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">Nationality:</div>
+        <div class="col-sm-9">{{ student.nationality }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">Phone:</div>
+        <div class="col-sm-9">{{ student.phoneNumber }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">Email:</div>
+        <div class="col-sm-9">{{ student.email }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-sm-3 fw-bold">Address:</div>
+        <div class="col-sm-9">{{ student.address }}</div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-sm-3 fw-bold">File:</div>
+        <div class="col-sm-9">
+          <div *ngIf="studentFound && student.fileName">
+            <button (click)="showFile = !showFile" class="btn btn-sm btn-primary mb-2">
+              {{ showFile ? 'Hide File' : 'View File' }}
+            </button>
+
+            <div *ngIf="showFile">
+              <img [src]="'http://localhost:8080/student/' + student.studentID + '/file'" alt="Student File"
+                class="img-thumbnail" width="150" />
+            </div>
+          </div>
+          
+
+          <div *ngIf="!student.fileName" class="text-muted">
+            N/A
+          </div>
+
+
+        </div>
+
+        <div class="text-end">
+          <button class="btn btn-warning" (click)="cancel()">Cancel</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
