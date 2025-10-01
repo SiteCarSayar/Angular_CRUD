@@ -1,12 +1,12 @@
 <div class="container mt-4">
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <!-- Title -->
-    <h2 class="mb-0">Student List</h2>
+    <h1 class="mb-0 fw-bold">Student List</h1>
 
     <!-- Search and New Button -->
     <div class="d-flex align-items-center gap-2 flex-wrap">
       <div class="position-relative mx-auto my-3">
-        
+
         <input type="text" class="form-control form-control-lg rounded-pill ps-4 pe-5"
           placeholder="Search by Name or ID" [(ngModel)]="searchKeyword">
 
@@ -18,8 +18,9 @@
       <button class="btn btn-success btn-lg" (click)="searchManual()">Search</button>
       <button class="btn btn-primary btn-lg" (click)="showDialog()">+ New</button>
 
-      <p-dialog header="Student Register Form" [modal]="true" [(visible)]="visibleForm"
-        [style]="{ width: '60rem', height: '110rem' }" [closable]="true">
+      <p-dialog [header]="studentRegi ? 'Register Student Form' : 'Registered Student Update Form'" [modal]="true"
+        [(visible)]="visibleForm" [style]="{ width: '60rem', height: '110rem' }" [closable]="true"
+        (onHide)="ResetStudentForm()">
 
         <!-- Body -->
         <div class="modal-body">
@@ -29,7 +30,10 @@
               <!-- Student ID -->
               <div class="col-md-6">
                 <label for="studentId" class="form-label">Student ID</label>
-                <input type="text" value="TBA" class="form-control" name="studentId" id="studentId" disabled>
+                <input *ngIf="this.studentRegi" type="text" value="TBA" class="form-control" name="studentId"
+                  id="studentId" disabled>
+                <input *ngIf="!this.studentRegi" type="text" class="form-control" [(ngModel)]="student.studentID"
+                  id="studentId" name="studentId" disabled>
               </div>
 
               <!-- Grade -->
@@ -96,9 +100,12 @@
               <div class="col-md-6">
                 <label for="nrc" class="form-label">NRC No.</label>
                 <input type="text" class="form-control" id="nrc" name="nrc" ngModel required [(ngModel)]="student.nrcNo"
-                  pattern="^[0-9]{1,2}/[A-Z]{3}\([NPT]\)[0-9]{6}$" #nrc="ngModel">
+                  pattern="^[0-9]{1,2}/[A-Z]{3}\([NPT]\)[0-9]{6}$" #nrc="ngModel" (blur)="onNrcBlur()">
                 <div *ngIf="nrc.invalid && nrc.touched" class="text-danger mt-1">
                   Invalid NRC format e.g. 12/MKN(N)123456
+                </div>
+                <div *ngIf="nrcExists" class="text-danger mt-1">
+                  This NRC No. is already Exist!
                 </div>
               </div>
 
@@ -128,9 +135,14 @@
               <div class="col-md-6">
                 <label for="email" class="form-label">Email Address</label>
                 <input type="email" class="form-control" id="email" name="email" ngModel #email="ngModel"
-                  pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" [(ngModel)]="student.email" required>
+                  pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" [(ngModel)]="student.email"
+                  (blur)="onEmailBlur()" required>
                 <div *ngIf="email.invalid && email.touched" style="color:red">
                   Enter a valid email
+                </div>
+                <!-- Backend check -->
+                <div *ngIf="emailExists" style="color:red">
+                  This email is already Exist.
                 </div>
               </div>
 
@@ -141,17 +153,32 @@
                 </textarea>
               </div>
 
-              <!-- File Upload -->
-              <div class="col-7 d-flex align-items-start gap-3">
-                <!-- Left: File Input -->
-                <div class="flex-grow-1">
-                  <label for="file" class="form-label">Passport Photo :</label>
-                  <input type="file" id="file" name="file" (change)="onFileSelected($event)">
-                </div>
+              <div class="col-6">
+                <div class="d-flex flex-column align-items-start mb-3">
 
-                <!-- Right: Image Preview -->
-                <div class="text-center col-5">
-                  <img *ngIf="previewUrl" [src]="previewUrl" alt="Preview" class="img-thumbnail mb-2" width="150">
+                  <!-- File label + button in a row -->
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <label for="file" class="mb-0">Passport Photo:</label>
+
+                    <!-- Hidden file input -->
+                    <input type="file" id="file" name="file" (change)="onFileSelected($event)" hidden>
+
+                    <!-- Custom button -->
+                    <label for="file" class="btn btn-outline-primary mb-0">
+                      {{ studentRegi ? 'Choose File' : 'Change' }}
+                    </label>
+                  </div>
+
+                  <!-- Image preview -->
+                  <div *ngIf="previewUrl" class="mb-2">
+                    <img [src]="previewUrl" alt="Preview" class="img-thumbnail" width="150">
+                  </div>
+
+                  <!-- Current file name -->
+                  <div *ngIf="selectedFileName" class="text-center">
+                    Current file: <strong>{{ selectedFileName }}</strong>
+                  </div>
+
                 </div>
               </div>
 
@@ -161,8 +188,13 @@
 
         <!-- Footer -->
         <div class="d-flex justify-content-center gap-3">
-          <button class="btn btn-success btn-lg" (click)="saveWithFile()" type="submit">Submit</button>
-          <button class="btn btn-danger btn-lg" (click)="Reset()">Reset</button>
+          <button *ngIf="this.studentRegi" class="btn btn-success btn-lg" (click)="saveWithFile()"
+            type="submit">Submit</button>
+          <button *ngIf="!this.studentRegi" class="btn btn-success btn-lg" (click)="updateStudent()"
+            type="submit">Update</button>
+
+          <button *ngIf="this.studentRegi" class="btn btn-danger btn-lg" (click)="ResetStudentForm()">Reset</button>
+          <button *ngIf="!this.studentRegi" class="btn btn-danger btn-lg" (click)="CancelEdit()">Cancel</button>
         </div>
       </p-dialog>
     </div>
@@ -207,7 +239,7 @@
           </td>
           <td class="text-center">
             <div class="d-flex justify-content-center gap-2">
-              <button class="btn btn-sm btn-warning" (click)="editStudent(student.studentID)">Edit</button>
+              <button class="btn btn-sm btn-warning" (click)="editStudent(student)">Edit</button>
               <button class="btn btn-sm btn-danger" (click)="openDeleteDialog(student)">Delete</button>
             </div>
           </td>
@@ -229,7 +261,7 @@
   </p-dialog>
 
   <!-- Toast Notification -->
-  <p-toast></p-toast>
+  <p-toast  position="top-center"></p-toast>
 
   <!-- Pagination Controls -->
   <div class="d-flex justify-content-center gap-2 mt-2">

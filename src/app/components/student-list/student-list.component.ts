@@ -38,6 +38,13 @@ export class StudentListComponent implements OnInit {
   totalRecords: number = 0;
   selectedFile: File | null = null;
 
+  //for checking existing email and nrc
+  emailExists: boolean = false;
+  nrcExists: boolean = false;
+
+  //for student edit and create
+  studentRegi: boolean = false;
+
   //for search box
   searchKeyword: string = '';
 
@@ -45,6 +52,7 @@ export class StudentListComponent implements OnInit {
   pageSize = 10;   // records per page
   allView = false;
 
+  // For delete dialog
   studentToDelete: Student | null = null;
   displayDeleteDialog = false;
 
@@ -53,7 +61,7 @@ export class StudentListComponent implements OnInit {
 
   // For file preview
   previewUrl: string | ArrayBuffer | null = null;
-  selectedFileName: string = '';
+  selectedFileName: String = '';
   constructor(
     private commonService: CommonService,
     private router: Router,
@@ -64,6 +72,7 @@ export class StudentListComponent implements OnInit {
   }
 
   showDialog() {
+    this.studentRegi = true;
     this.visibleForm = true;
   }
 
@@ -87,9 +96,32 @@ export class StudentListComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Please fill in all important fields', life: 3000 });
       return;
     }
+    if (this.student.email) {
+      this.commonService.checkEmailExist(this.student.email).subscribe({
+        next: (exists: boolean) => {
+          if (exists) {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Failed',
+              detail: 'This email is already Exits!',
+              life: 3000
+            });
+          }
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to save student.',
+            life: 3000
+          });
+        }
+      });
+    }
+
     this.commonService.saveWithFile(this.student, this.selectedFile).subscribe((response: any) => {
       if (response) {
-        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Student Saved successfully!', life: 3000 });
+        this.messageService.add({ severity: 'success', summary: 'Created', detail: 'Student Created successfully!', life: 3000 });
         this.student = new Student();
         this.visibleForm = false;
         this.loadPage(0); // Refresh list to show new student
@@ -99,14 +131,52 @@ export class StudentListComponent implements OnInit {
       }
     });
   }
-  Reset() {
+  editStudent(student: Student): void {
+    this.studentRegi = false;
+    this.visibleForm = true;
+    this.student = { ...student }; // Create a copy of the student object to edit
+
+    // file preview
+    if (student.fileData) {
+      this.previewUrl = `data:image/jpeg;base64,${student.fileData}`;
+      this.selectedFileName = student.fileName;
+      console.log("Selected file name:", this.selectedFileName);
+    } else {
+      this.previewUrl = null;
+      this.selectedFileName = '';
+    }
+    this.selectedFile = null; // user can select new file if needed
+
+  }
+  updateStudent() {
+    if (!this.student.studentName || !this.student.fatherName || !this.student.email || !this.student.nrcNo || !this.student.grade) {
+      this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Please fill in all important fields', life: 3000 });
+      return;
+    }
+    this.commonService.updateStudent(this.student, this.selectedFile).subscribe((response: any) => {
+      if (response) {
+        this.messageService.add({ severity: 'success', summary: 'Updated', detail: 'Student updated successfully!', life: 3000 });
+        this.student = new Student();
+        this.visibleForm = false;
+        this.ResetStudentForm();
+        this.loadPage(this.start); // Refresh current page to show updated student
+      } else {
+        this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Can not update!', life: 3000 });
+      }
+    });
+  }
+
+  ResetStudentForm() {
     this.student = new Student();
     this.previewUrl = null;
     this.selectedFileName = '';
   }
+  CancelEdit() {
+    this.visibleForm = false;
+  }
 
 
-  // Load a page from the backend
+  // Load a page from the backend 10 records at a time
   loadPage(offset: number): void {
     this.start = offset;
     this.commonService.getByOffsetAndLimit(this.start, this.pageSize).subscribe(res => {
@@ -115,7 +185,7 @@ export class StudentListComponent implements OnInit {
     });
   }
 
-  // Go to next page
+  // Go to next page pagination
   next(): void {
     if (this.allView) {
       this.messageService.add({ severity: 'warn', summary: 'Warning', detail: 'You are already viewing all records!', life: 3000 });
@@ -128,9 +198,7 @@ export class StudentListComponent implements OnInit {
       this.messageService.add({ severity: 'warn', summary: 'Warning', detail: 'End of records! Switch to "View All" to see all records.', life: 3000 });
     }
   }
-
-
-  // Go to previous page
+  // Go to previous pagination
   previous(): void {
     if (this.start > 0) {
       this.loadPage(Math.max(this.start - this.pageSize, 0));
@@ -172,19 +240,14 @@ export class StudentListComponent implements OnInit {
     });
   }
 
-  editStudent(studentID: number): void {
-    this.router.navigate(['/student/edit', studentID]);
-  }
 
-  goToAddStudent(): void {
-    this.router.navigate(['/student/save']);
-  }
 
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;  // ✅ real file reference
       this.selectedFileName = file.name;
+      console.log("File selected:", this.selectedFileName);
 
       const reader = new FileReader();
       reader.onload = e => this.previewUrl = reader.result;
@@ -193,6 +256,36 @@ export class StudentListComponent implements OnInit {
       this.previewUrl = null;
       this.selectedFileName = '';
       this.selectedFile = null;
+    }
+  }
+
+  onEmailBlur(): void {
+    if (!this.studentRegi) return;
+
+    if (this.student.email) {
+      this.commonService.checkEmailExist(this.student.email).subscribe({
+        next: (exists: boolean) => {
+          this.emailExists = exists;
+        },
+        error: (err) => {
+          console.error('Error checking email:', err);
+          this.emailExists = false;
+        }
+      });
+    }
+  }
+  onNrcBlur(): void {
+    if(!this.studentRegi) return;
+    if (this.student.nrcNo) {
+      this.commonService.checkNrcExist(this.student.nrcNo).subscribe({
+        next: (exists: boolean) => {
+          this.nrcExists = exists;
+        },
+        error: (err) => {
+          console.error('Error checking NRC:', err);
+          this.nrcExists = false;
+        }
+      });
     }
   }
 }
