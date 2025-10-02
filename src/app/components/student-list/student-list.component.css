@@ -1,0 +1,13 @@
+.preview-img {
+  width: 150px;       /* fixed width */
+  height: 150px;      /* fixed height */
+  object-fit: cover;  /* crop nicely without distortion */
+  border-radius: 8px; /* optional rounded corners */
+  margin-bottom: 12px; /* gap below image */
+}
+
+.file-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;  /* space between "Passport Photo:" and button */
+}
