@@ -8,7 +8,7 @@ import { SerachStudentComponent } from './components/serach-student/serach-stude
 export const routes: Routes = [
    { path: 'student/edit/:studentID', component: HomeComponent },
    {path:'student/save',component:HomeComponent},
-   {path:'',component:HomeComponent},
+   {path:'',component:StudentListComponent},
    {path:'student/list',component:StudentListComponent},
    {path:'student/delete',component:DeleteStudentComponent},
    {path:'student/search',component:SerachStudentComponent}

@@ -1,43 +1,65 @@
-import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
-import { Student } from '../entity/student';
 import { FormsModule } from '@angular/forms';
 import { CommonService } from '../service/common.service';
+import { Student } from '../entity/student';
+
+declare var bootstrap: any; // Needed to open Bootstrap modal programmatically
 
 @Component({
   selector: 'app-delete-student',
   standalone: true,
   imports: [FormsModule],
   templateUrl: './delete-student.component.html',
-  styleUrl: './delete-student.component.css'
+  styleUrls: ['./delete-student.component.css']
 })
 export class DeleteStudentComponent {
 
- student:Student=new Student();
- studentId:number | null = null;
- 
+  student: Student = new Student();
+  studentId: number | null = null;
 
-  constructor(private httpClient:HttpClient,private commonService:CommonService){}
+  modalTitle = '';
+  modalMessage = '';
 
-deleteStudent() {
+  constructor(private commonService: CommonService) {}
+
+  deleteStudent() {
     if (this.studentId == null) {
-      window.alert('Please enter a Student ID.');
-     
+      this.showModal('Error', 'Please enter a Student ID.');
       return;
     }
-     window.alert('Student ID is '+this.studentId);
- 
+
+    // Optional info about the ID
+    this.showModal('Info', 'Student ID is ' + this.studentId);
+
+    // Call delete API
     this.commonService.deleteStudent(this.student).subscribe(
-       (response: any) => {
+      (response: any) => {
         if (response) {
-          window.alert("Deleted Successfully!");
+          this.showModal('Success', 'Deleted Successfully!');
+          this.reset();
         } else {
-          window.alert("Delete failed.");
+          this.showModal('Failed', 'Delete failed.');
         }
-      });
-}
+      },
+      () => {
+        this.showModal('Error', 'Something went wrong.');
+      }
+    );
+  }
 
   reset() {
     this.studentId = null;
+  }
+
+  // Open Bootstrap modal
+  showModal(title: string, message: string) {
+    this.modalTitle = title;
+    this.modalMessage = message;
+
+    const modalEl = document.getElementById('alertModal');
+    if (modalEl) {
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
   }
 }

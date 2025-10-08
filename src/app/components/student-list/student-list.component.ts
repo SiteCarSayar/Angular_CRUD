@@ -14,6 +14,7 @@ import { TableModule } from 'primeng/table';
 // App-specific imports
 import { Student } from '../entity/student';
 import { CommonService } from '../service/common.service';
+import { blob } from 'node:stream/consumers';
 
 
 @Component({
@@ -73,57 +74,60 @@ export class StudentListComponent implements OnInit {
 
   // Called by "Search" 
   onSearchInput() {
-    if (!this.searchKeyword || this.searchKeyword.trim() === '') return;
+    if (!this.searchKeyword || this.searchKeyword.trim() === '')
+       return;
+      
+   
 
     this.commonService.searchByNameOrId(this.searchKeyword)
       .subscribe((data: Student[]) => {
         this.studentList = data; // update table with results
       });
   }
-//search by button
-searchManual() {
-  if (!this.searchKeyword || this.searchKeyword.trim() === '') return;
+  //search by button
+  searchManual() {
+    if (!this.searchKeyword || this.searchKeyword.trim() === '') return;
 
-  this.visibleForm = true; // show same dialog
+    this.visibleForm = true; // show same dialog
 
-  this.commonService.searchByNameOrId(this.searchKeyword.trim())
-    .subscribe((data: Student[]) => {
-      if (data.length === 0) {
-        this.messageService.add({ severity: 'warn', summary: 'Not Found', detail: 'No student found', life: 3000 });
-        return;
-      }
+    this.commonService.searchByNameOrId(this.searchKeyword.trim())
+      .subscribe((data: Student[]) => {
+        if (data.length === 0) {
+          this.messageService.add({ severity: 'warn', summary: 'Not Found', detail: 'No student found', life: 3000 });
+          return;
+        }
 
-      const student = data[0]; // take the first matching student
-      this.studentRegi = false;
-      this.isViewOnly = true; // view-only mode
-      this.student = { ...student };
+        const student = data[0]; // take the first matching student
+        this.studentRegi = false;
+        this.isViewOnly = true; // view-only mode
+        this.student = { ...student };
 
-      // for passport photo
-      if (student.fileData) {
-        this.previewUrl = `data:image/jpeg;base64,${student.fileData}`;
-        this.selectedFileName = student.fileName;
-      } else {
-        this.previewUrl = 'assets/imges/default.jpg';
-        this.selectedFileName = '';
-      }
-    });
-}
-ResetSearch() {
+        // for passport photo
+        if (student.fileData) {
+          this.previewUrl = `data:image/jpeg;base64,${student.fileData}`;
+          this.selectedFileName = student.fileName;
+        } else {
+          this.previewUrl = 'assets/imges/default.jpg';
+          this.selectedFileName = '';
+        }
+      });
+  }
+  ResetSearch() {
     this.searchKeyword = '';
     this.loadPage(0); // reload first page
-}
+  }
 
-//for create new student or register
-saveWithFile() {
-  if (!this.student.studentName || !this.student.fatherName || !this.student.email || !this.student.nrcNo || !this.student.grade) {
+  //for create new student or register
+  saveWithFile() {
+    if (!this.student.studentName || !this.student.fatherName || !this.student.email || !this.student.nrcNo || !this.student.grade) {
       this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Please fill in all important fields', life: 3000 });
       return;
-  }
-  if (this.student.email) {
-    this.commonService.checkEmailExist(this.student.email).subscribe({
-      next: (exists: boolean) => {
-        if (exists) {
-          this.messageService.add({
+    }
+    if (this.student.email) {
+      this.commonService.checkEmailExist(this.student.email).subscribe({
+        next: (exists: boolean) => {
+          if (exists) {
+            this.messageService.add({
               severity: 'error',
               summary: 'Failed',
               detail: 'This email is already Exits!',
@@ -140,8 +144,8 @@ saveWithFile() {
           });
         }
       });
-  }
-  this.commonService.saveWithFile(this.student, this.selectedFile).subscribe((response: any) => {
+    }
+    this.commonService.saveWithFile(this.student, this.selectedFile).subscribe((response: any) => {
       if (response) {
         this.messageService.add({ severity: 'success', summary: 'Created', detail: 'Student Created successfully!', life: 3000 });
         this.student = new Student();
@@ -153,8 +157,8 @@ saveWithFile() {
     });
   }
 
-// for student update or edit to display dialog box
-editStudent(student: Student): void {
+  // for student update or edit to display dialog box
+  editStudent(student: Student): void {
     this.studentRegi = false;
     this.visibleForm = true;
     this.student = { ...student }; // Create a copy of the student object to edit
@@ -170,12 +174,20 @@ editStudent(student: Student): void {
     }
     this.selectedFile = null; // user can select new file if needed
   }
-// for update button when to update
-updateStudent() {
+  // for update button when to update
+  updateStudent() {
     if (!this.student.studentName || !this.student.fatherName || !this.student.email || !this.student.nrcNo || !this.student.grade) {
       this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Please fill in all important fields', life: 3000 });
       return;
     }
+    // if(this.emailExists){
+    //   this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Email is already Exist!!', life: 3000 });
+    //   return;
+    // }
+    // if(this.nrcExists){
+    //   this.messageService.add({severity:'error',summary:'Failed',detail:'This NRC no. is already Exist!!'});
+    //   return;
+    // }
     this.commonService.updateStudent(this.student, this.selectedFile).subscribe((response: any) => {
       if (response) {
         this.messageService.add({ severity: 'success', summary: 'Updated', detail: 'Student updated successfully!', life: 3000 });
@@ -188,22 +200,22 @@ updateStudent() {
       }
     });
   }
-//reset dialog box
-ResetStudentForm() {
+  //reset dialog box
+  ResetStudentForm() {
     this.student = new Student();
     this.previewUrl = 'assets/imges/default.jpg';
     this.selectedFileName = '';
-    this.emailExists=false;
-    this.nrcExists=false;
-    this.isViewOnly=false;
+    this.emailExists = false;
+    this.nrcExists = false;
+    this.isViewOnly = false;
   }
-//close dialog box
-CloseDialog() {
+  //close dialog box
+  CloseDialog() {
     this.visibleForm = false;
   }
 
-// Load a page from the backend 10 records at a time
-loadPage(offset: number): void {
+  // Load a page from the backend 10 records at a time
+  loadPage(offset: number): void {
     this.start = offset;
     this.commonService.getByOffsetAndLimit(this.start, this.pageSize).subscribe(res => {
       this.studentList = res.content;            // page content
@@ -212,7 +224,7 @@ loadPage(offset: number): void {
   }
 
   // Go to next page pagination
-next(): void {
+  next(): void {
     if (this.allView) {
       this.messageService.add({ severity: 'warn', summary: 'Warning', detail: 'You are already viewing all records!', life: 3000 });
       return;
@@ -223,15 +235,15 @@ next(): void {
       // End of paging
       this.messageService.add({ severity: 'warn', summary: 'Warning', detail: 'End of records! Switch to "View All" to see all records.', life: 3000 });
     }
-}
+  }
   // Go to previous pagination
-previous(): void {
+  previous(): void {
     if (this.start > 0) {
       this.loadPage(Math.max(this.start - this.pageSize, 0));
     }
   }
   // Toggle view all
-viewAll(): void {
+  viewAll(): void {
     if (!this.allView) {
       this.allView = true;
       this.commonService.getByOffsetAndLimit(0, this.totalRecords || 1000).subscribe(res => {
@@ -242,15 +254,15 @@ viewAll(): void {
       this.allView = false;
       this.loadPage(0);
     }
-    this.searchKeyword='';
-}
+    this.searchKeyword = '';
+  }
 
-//for delete dialog box 
-openDeleteDialog(student: Student): void {
+  //for delete dialog box 
+  openDeleteDialog(student: Student): void {
     this.studentToDelete = student;
     this.displayDeleteDialog = true;
-}
-confirmDelete(): void {
+  }
+  confirmDelete(): void {
     if (!this.studentToDelete) return;
 
     this.commonService.deleteStudent(this.studentToDelete).subscribe(response => {
@@ -264,16 +276,16 @@ confirmDelete(): void {
       this.displayDeleteDialog = false;
       this.studentToDelete = null;
     });
-}
-//for file seleted
-onFileSelected(event: any): void {
+  }
+  //for file seleted
+  onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;  // ✅ real file reference
       this.selectedFileName = file.name;
       console.log("File selected:", this.selectedFileName);
 
-      console.log("preview is" +this.previewUrl)
+      console.log("preview is" + this.previewUrl)
       const reader = new FileReader();
       reader.onload = e => this.previewUrl = reader.result;
       reader.readAsDataURL(file);
@@ -283,8 +295,8 @@ onFileSelected(event: any): void {
       this.selectedFile = null;
     }
   }
-//email check if exits or not
-onEmailBlur(): void {
+  //email check if exits or not
+  onEmailBlur(): void {
     if (!this.studentRegi) return;
 
     if (this.student.email) {
@@ -299,9 +311,9 @@ onEmailBlur(): void {
       });
     }
   }
-//for NRC number check
+  //for NRC number check
   onNrcBlur(): void {
-    if(!this.studentRegi) return;
+    if (!this.studentRegi) return;
     if (this.student.nrcNo) {
       this.commonService.checkNrcExist(this.student.nrcNo).subscribe({
         next: (exists: boolean) => {
@@ -314,4 +326,51 @@ onEmailBlur(): void {
       });
     }
   }
+
+  //for exportExcel
+  exportExcel(studentId: number): void {
+    this.commonService.exportExcelByID(studentId).subscribe({
+      next: (blob) => {
+        this.downloadBlob(blob, `Student_${studentId}.xlsx`);
+      },
+      error: (error) => {
+        console.error("Export failed", error);
+      }
+    });
+  }
+  exportExcelByPageorAll(): void {
+      const keyword=this.searchKeyword.trim();
+      if(!keyword){
+         this.commonService.exportAll().subscribe({
+      next:(blob)=>{
+        this.downloadBlob(blob,`All_STUDENTS.xlsx`);
+      },
+      error: (error) => {
+        console.error("Export failed", error);
+      }
+     });
+    } else{
+    // Has search keyword → export only searched data
+    this.commonService.exportExcelBySearch(keyword).subscribe({
+      next: (blob) => {
+       // console.log('Exporting searched data for keyword:', keyword);
+        this.downloadBlob(blob, `Searched_Students.xlsx`);
+      },
+      error: (error) => {
+        console.error('Export failed', error);
+      }
+    });
+  }
+  }
+
+  // Utility method to trigger download
+  private downloadBlob(blob: Blob, fileName: string) {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
 }

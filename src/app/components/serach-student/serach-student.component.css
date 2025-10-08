@@ -87,3 +87,27 @@ button.btn-warning:hover {
     text-align: center !important;
   }
 }
+.toast-box {
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 5px;
+  animation: fadeInOut 3s forwards;
+}
+
+/* Success = green text */
+.success {
+  color: #28a745;
+}
+
+/* Danger = red text */
+.danger {
+  color: #dc3545;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-5px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-5px); }
+}
+

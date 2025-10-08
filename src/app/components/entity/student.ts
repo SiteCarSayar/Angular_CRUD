@@ -1,6 +1,6 @@
 export class Student {
     studentID:number=0;
-    studentName:String="";
+    studentName:string="";
     fatherName:String="";
     dateOfBirth:String="";
     gender:String="";

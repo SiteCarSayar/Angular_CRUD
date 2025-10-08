@@ -2,6 +2,7 @@
   <h2 *ngIf="studentRegi">Student Registration Form</h2>
   <h2 *ngIf="!studentRegi">Edit Student Information Form</h2>
 </div>
+<p-toast></p-toast>
 
 <div class="container">
   <form #studentForm="ngForm" >
@@ -103,9 +104,14 @@
     <!-- File Upload -->
     <div class="file-upload">
       <label for="fileInput">Choose File:</label>
+     
       <input type="file" id="fileInput" name="chooseFile" (change)="onFileSelected($event)">
     </div>
 
+    <!-- Success Dialog -->
+<p-dialog header="Success" [(visible)]="displaySuccessDialog" [modal]="true" [closable]="false">
+  <p>Student "{{ student.studentName }}" updated successfully!</p>
+</p-dialog>
     <!-- Buttons -->
   <div class="d-flex justify-content-center gap-3 mt-3">
   <button class="btn btn-primary" *ngIf="studentRegi" (click)="saveWithFile()" type="submit">Submit</button>
@@ -114,6 +120,6 @@
   <button class="btn btn-warning" *ngIf="studentRegi" type="reset">Reset</button>
   <button class="btn btn-danger" *ngIf="!studentRegi" (click)="back()">Back</button>
 </div>
-
+ 
   </form>
 </div>

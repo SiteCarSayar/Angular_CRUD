@@ -12,6 +12,9 @@ import { CommonModule } from '@angular/common';
 import { Student } from '../entity/student';
 import { CommonService } from '../service/common.service';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+import { DialogModule } from 'primeng/dialog';
 
 
 @Component({
@@ -20,7 +23,7 @@ import { Router } from '@angular/router';
   imports: [
     MatButtonModule, MatSelectModule, MatRadioModule,
     MatNativeDateModule, MatDatepickerModule, MatInputModule, MatFormFieldModule,
-    CommonModule, FormsModule, ReactiveFormsModule
+    CommonModule, FormsModule, ReactiveFormsModule, ToastModule,DialogModule
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
@@ -28,10 +31,11 @@ import { Router } from '@angular/router';
 export class HomeComponent implements OnInit {
 
   studentRegi:boolean=true;
+  displaySuccessDialog = false;
   selectedFile!: File;
   student: Student = new Student();
 
-  constructor(private commonService: CommonService,private router:Router) { }
+  constructor(private commonService: CommonService,private router:Router,private messageService:MessageService) { }
 
   ngOnInit(): void {
 
@@ -56,8 +60,6 @@ onFileSelected(event: any) {
   }
 
 }
-  
- 
   findById(id:number){
     this.commonService.getById(id).subscribe((response:any)=>{
       if(response){ 
@@ -68,51 +70,80 @@ onFileSelected(event: any) {
     });
   }
 
-  save() {
-    if (!this.student.studentName || !this.student.fatherName || !this.student.email) {
-      console.log("Please fill in all required fields.");
-      return;
-    }
-    this.commonService.save(this.student).subscribe((response: any) => {
-      if (response) {
-        console.log("Saved Successfully!");
-        this.student = new Student();
-        this.router.navigate(['/student/list']);
-      } else {
-        console.log("Save failed.");
-      }
-    });
-  }
+  // save() {
+  //   if (!this.student.studentName || !this.student.fatherName || !this.student.email) {
+  //     console.log("Please fill in all required fields.");
+  //     return;
+  //   }
+  //   this.commonService.save(this.student).subscribe((response: any) => {
+  //     if (response) {
+  //      this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Student Saved successfully!', life: 3000 });
+  //       this.student = new Student();
+  //       this.router.navigate(['/student/list']);
+  //     } else {
+  //       this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Can not Saved!', life: 3000 });
+       
+  //     }
+  //   });
+  // }
   saveWithFile() {
     if (!this.student.studentName || !this.student.fatherName || !this.student.email) {
+      console.log(this.student.studentName);
       console.log("Please fill in all required fields.");
       return;
     }
     this.commonService.saveWithFile(this.student,this.selectedFile).subscribe((response: any) => {
       if (response) {
-        console.log("Saved Successfully with file!");
+        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Student Saved successfully!', life: 3000 });
         this.student = new Student();
         this.router.navigate(['/student/list']);
       } else {
-        console.log("Save with file failed.");
+        this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Can not Saved!', life: 3000 });
+       
       }
     });
   }
 
-  editStudent(){ 
-    if(!this.student.studentID){
-      console.log("Student ID is missing for update.");
-      return;
-    }
-    this.commonService.updateStudent(this.student).subscribe((response:any)=>{
-      if(response){
-        console.log("Updated Successfully!");
-        this.student=new Student();
+  // editStudent(){ 
+  //   if(!this.student.studentID){
+  //     console.log("Student ID is missing for update.");
+  //     this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Student ID is missing for update.', life: 3000 });
+  //     return;
+  //   }
+  //   this.commonService.updateStudent(this.student,this.selectedFile).subscribe((response:any)=>{
+  //     if(response){
+  //       this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Student Saved successfully!', life: 3000 });
+  //       console.log("Updated Successfully!");
+  //       this.student=new Student();
+  //       this.router.navigate(['/student/list']);
+  //     }else {
+  //       this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Can not update!', life: 3000 });
+  //       console.log("Update failed.");
+  //     }
+  //   }); 
+  // }
+  editStudent(){
+   this.commonService.updateStudent(this.student, this.selectedFile).subscribe((response: any) => {
+    if (response) {
+      // show success dialog
+      this.displaySuccessDialog = true;
+
+      // automatically hide after 3 seconds
+      setTimeout(() => {
+        this.displaySuccessDialog = false;
+        this.student = new Student();
         this.router.navigate(['/student/list']);
-      }else {
-        console.log("Update failed.");
-      }
-    }); 
+      }, 3000);
+    } else {
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Failed', 
+        detail: 'Update failed.', 
+        life: 3000 
+      });
+      console.log("Update failed.");
+    }
+  });
   }
   back(){
     this.router.navigate(['/student/list']);
