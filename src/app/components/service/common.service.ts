@@ -11,53 +11,66 @@ import { Student } from '../entity/student';
 export class CommonService {
   private apiRoute = 'http://localhost:8080';
 
-  constructor( private httpClient:HttpClient) { }
+  constructor(private httpClient: HttpClient) { }
 
   getAllStudent(): Observable<Student[]> {
-    return this.httpClient.get<Student[]>(this.apiRoute+"/student/all");
+    return this.httpClient.get<Student[]>(this.apiRoute + "/student/all");
 
   }
-  getById(id:number){
-    return this.httpClient.get(this.apiRoute+"/student/"+id)
+  getById(id: number) {
+    return this.httpClient.get(this.apiRoute + "/student/" + id)
   }
-  getFileById(id:number){
-    return this.httpClient.get(this.apiRoute+"/student/download/"+id,{ responseType: 'blob' });
+  getFileById(id: number) {
+    return this.httpClient.get(this.apiRoute + "/student/download/" + id, { responseType: 'blob' });
+  }
+  // Get student marks by studentID
+  getStudentMarks(studentID: number): Observable<any[]> {
+    return this.httpClient.get<any[]>(`${this.apiRoute}/student/student-mark/${studentID}`);
   }
 
   //pagination
- getByOffsetAndLimit(offset: number, limit: number) {
-  return this.httpClient.get<any>(
-    `${this.apiRoute}/student/getByOffsetAndLimit?offset=${offset}&limit=${limit}`
-  );
-}
-  save(student:Student){
-    return this.httpClient.post(this.apiRoute+"/student/create",student);
+  getByOffsetAndLimit(offset: number, limit: number) {
+    return this.httpClient.get<any>(
+      `${this.apiRoute}/student/getByOffsetAndLimit?offset=${offset}&limit=${limit}`
+    );
+  }
+  save(student: Student) {
+    return this.httpClient.post(this.apiRoute + "/student/create", student);
   }
 
-  saveWithFile(student: Student, file: File  | null): Observable<any> {
-  const formData = new FormData();
-  //  Convert student object into a JSON blob (important for @RequestPart("student"))
-  formData.append('student', new Blob([JSON.stringify(student)], { type: 'application/json' }));
-  //  Append the file
-  if (file) {
-    formData.append('file', file);
+  //   saveWithFile(student: Student, file: File  | null): Observable<any> {
+  //   const formData = new FormData();
+  //   //  Convert student object into a JSON blob (important for @RequestPart("student"))
+  //   formData.append('student', new Blob([JSON.stringify(student)], { type: 'application/json' }));
+  //   //  Append the file
+  //   if (file) {
+  //     formData.append('file', file);
+  //   }
+  //   //  Call backend endpoint
+  //   return this.httpClient.post(`${this.apiRoute}/student/creating`, formData);
+  // }
+  // saveWithFile(formData: FormData): Observable<any> {
+  //   return this.httpClient.post(`${this.apiRoute}/student/creating`, formData);
+  // }
+  saveStudentWithMark(formData: FormData): Observable<any> {
+    return this.httpClient.post(`${this.apiRoute}/student/create-with-marks`, formData);
   }
-  //  Call backend endpoint
-  return this.httpClient.post(`${this.apiRoute}/student/creating`, formData);
-}
 
-
-  updateStudent(student:Student,file:File | null): Observable<any> {
+  updateStudent(student: Student, file: File | null): Observable<any> {
     const formData = new FormData();
-    formData.append('student',new Blob([JSON.stringify(student)], { type: 'application/json' }));
-    if(file){
-      formData.append('file',file);
+    formData.append('student', new Blob([JSON.stringify(student)], { type: 'application/json' }));
+    if (file) {
+      formData.append('file', file);
     }
-    return this.httpClient.put(this.apiRoute+"/student/update/"+student.studentID,formData);
+    return this.httpClient.put(this.apiRoute + "/student/update/" + student.studentID, formData);
+  }
+  // Update student marks
+  updateStudentMarks(dto: any) {
+    return this.httpClient.put(`${this.apiRoute}/student/student-detail/update-marks`, dto);
   }
 
-  deleteStudent(student:Student){
-    return this.httpClient.delete(this.apiRoute+"/student/delete/"+student.studentID, { responseType: 'text' });
+  deleteStudent(student: Student) {
+    return this.httpClient.delete(this.apiRoute + "/student/delete/" + student.studentID, { responseType: 'text' });
   }
 
   //search by name or id
@@ -75,17 +88,27 @@ export class CommonService {
     return this.httpClient.get<boolean>(`${this.apiRoute}/student/checkNrcNo?nrcNo=${nrcNo}`);
   }
 
-  exportExcelByID(id:number){
-    return this.httpClient.get(this.apiRoute+"/student/export/"+id,{ responseType: 'blob' });
+  exportExcelByID(id: number) {
+    return this.httpClient.get(this.apiRoute + "/student/export/" + id, { responseType: 'blob' });
   }
-  exportAll(){
-    return this.httpClient.get(this.apiRoute+"/student/exportAll",{ responseType: 'blob' });
+  exportAll() {
+    return this.httpClient.get(this.apiRoute + "/student/exportAll", { responseType: 'blob' });
   }
 
   exportExcelByPage(offset: number, limit: number) {
-    return this.httpClient.get(this.apiRoute+"/student/exportByPage?offset="+offset+"&limit="+limit, { responseType: 'blob' });
+    return this.httpClient.get(this.apiRoute + "/student/exportByPage?offset=" + offset + "&limit=" + limit, { responseType: 'blob' });
   }
   exportExcelBySearch(keyword: string) {
-    return this.httpClient.get(this.apiRoute+"/student/exportBysearch?keyword="+keyword, { responseType: 'blob' });
+    return this.httpClient.get(this.apiRoute + "/student/exportBysearch?keyword=" + keyword, { responseType: 'blob' });
+  }
+
+  // search by gender
+  searchByGender(keyword: string): Observable<any> {
+    return this.httpClient.get<Student[]>(this.apiRoute + "/student/searchByGender?keyword=" + keyword);
+  }
+
+  // Accept FormData because we are sending multipart/form-data
+  importStudents(formData: FormData): Observable<any> {
+    return this.httpClient.post(`${this.apiRoute}/student/import`, formData); // JSON response expected
   }
 }

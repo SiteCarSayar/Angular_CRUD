@@ -1,3 +1,5 @@
+import { StudentDetailDTO } from './student-detail-dto';
+
 export class Student {
     studentID:number=0;
     studentName:string="";
@@ -13,5 +15,5 @@ export class Student {
     fileData:String="";
     fileName:String="";
 
-
+     marks: StudentDetailDTO[] = [];
 }

@@ -10,24 +10,84 @@
       <div class="input-group" style="min-width: 700px; max-width: 700px;">
         <input type="text" class="form-control rounded-start-pill ps-4" placeholder="Search by Name or ID"
           [(ngModel)]="searchKeyword" (input)="onSearchInput()">
-          <button class="btn btn-primary btn-hover rounded-end-pill me-2" (click)="searchManual()">
-            <i class="bi bi-search"></i> Search
-          </button>
+        <button class="btn btn-primary btn-hover rounded-end-pill me-2" title="Search" (click)="searchManual()">
+          <i class="bi bi-search"></i> Search
+        </button>
       </div>
 
       <!-- New button -->
-      <button class="btn btn-primary me-2" style="width: 100px;" (click)="showDialog()">
+      <button class="btn btn-primary me-2" title="Add New Student" style="width: 100px;" (click)="showDialog()">
         <i class="bi bi-person-plus"></i> New
       </button>
 
-      <button class="btn btn-primary me-2"  (click)="exportExcelByPageorAll()">
-        <i class="bi bi-download"></i>
+      <button class="btn btn-primary me-2" title="Export to Excel" (click)="openExportDialog()">
+        <i class="bi bi-download"></i> Export
       </button>
-     
+      <!-- Import button -->
+      <button class="btn btn-primary" title="Import Students" (click)="fileInput.click()">
+        <i class="bi bi-upload"></i> Import
+      </button>
+
+      <!-- Hidden File Input -->
+      <input type="file" #fileInput accept=".xlsx, .xls" style="display:none" (change)="onExcelSelected($event)" />
+      <!-- Export Dialog -->
+      <p-dialog header="Download Confirmation" [(visible)]="displayDownloadDialog" [modal]="true" [closable]="true">
+
+        <p>
+          Are you sure you want to download
+          <strong>
+            <!-- If keyword exists -->
+            <ng-container *ngIf="searchKeyword?.trim(); else allStudents">
+
+              <!-- Search = male -->
+              <ng-container *ngIf="searchKeyword.toLowerCase() === 'male'">
+                Male Students
+              </ng-container>
+
+              <!-- Search = female -->
+              <ng-container *ngIf="searchKeyword.toLowerCase() === 'female'">
+                Female Students
+              </ng-container>
+
+              <!-- Search = ID number -->
+              <ng-container *ngIf="isNumberSearch(searchKeyword)">
+                Students with ID containing "{{ searchKeyword }}"
+              </ng-container>
+
+              <!-- Search = Student name -->
+              <ng-container *ngIf="studentList.length > 0 
+          && searchKeyword.toLowerCase() !== 'male'
+          && searchKeyword.toLowerCase() !== 'female'
+          && !isNumberSearch(searchKeyword)">
+                Students
+              </ng-container>
+
+            </ng-container>
+          </strong>
+          ?
+        </p>
+
+        <!-- If no keyword -->
+        <ng-template #allStudents>
+          All Students
+        </ng-template>
+
+        <p-footer>
+          <div class="d-flex justify-content-center gap-2 mt-3">
+            <button class="btn btn-outline-danger" (click)="displayDownloadDialog = false">
+              Cancel
+            </button>
+            <button class="btn btn-outline-primary" (click)="exportExcelByPageorAll()">
+              Yes
+            </button>
+          </div>
+        </p-footer>
+
+      </p-dialog>
 
       <!-- Student Dialog -->
       <p-dialog
-        [header]="isViewOnly ? 'Information of '+student.studentName : (studentRegi ? 'Register Student Form' : 'Registered Student Update Form')"
+        [header]="isViewOnly ? 'Information of '+student.studentName : (studentRegi ? 'Register Form' : 'Registered Student Update Form')"
         [modal]="true" [(visible)]="visibleForm" [style]="{ width: '60rem', height: '110rem' }" [closable]="true"
         (onHide)="ResetStudentForm()">
 
@@ -123,7 +183,7 @@
 
                   <div class="d-flex align-items-center gap-2 mb-2">
                     <label for="file" class="mb-0">Passport Photo:</label>
-                    <input type="file" id="file" name="file" (change)="onFileSelected($event)" hidden
+                    <input type="file" id="file" name="file" (change)="onImageSelected($event)" hidden
                       [disabled]="isViewOnly">
                     <label for="file" class="btn btn-outline-primary mb-0">
                       {{ studentRegi ? 'Choose File' : 'Change' }}
@@ -190,7 +250,57 @@
                   [disabled]="isViewOnly">
                 </textarea>
               </div>
+              <!-- Student Subjects & Marks -->
+              <div class="col-md-12 mb-3">
+                <label class="form-label">Subjects & Marks</label>
+                <table class="table table-hover table-sm table-bordered align-middle text-center"
+                  style="table-layout: fixed;">
+                  <thead>
+                    <tr>
+                      <th style="width: 5%">#</th>
+                      <th style="width: 45%">Subject</th>
+                      <th style="width: 30%">Mark</th>
+                      <th style="width: 20%">
+                        <button class="btn btn-sm btn-outline-primary w-100" (click)="addSubject()">
+                          <i class="bi bi-plus-circle"></i> Add
+                        </button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let sm of studentMarks; let i = index">
+                      <td>{{ i + 1 }}</td>
 
+                      <!-- Subject -->
+                      <td>
+                        <select class="form-select form-select-sm" [(ngModel)]="sm.subject" name="subject{{i}}"
+                          required>
+                          <option value="" disabled>Select Subject</option>
+                          <option *ngFor="let s of getAvailableSubjects(i)" [value]="s.subjectName">{{ s.subjectName }}</option>
+                        </select>
+                      </td>
+
+                      <!-- Mark -->
+                      <td>
+                        <input type="tel" class="form-control form-control-sm" [(ngModel)]="sm.mark"
+                          #markInput="ngModel" name="mark{{i}}" pattern="^([0-9]|[1-9][0-9]|100)$" maxlength="3"
+                          required (ngModelChange)="validateMark(i)">
+                        <small class="text-danger" *ngIf="markInput.invalid && markInput.touched">
+                          Mark must be a number between 0 and 100
+                        </small>
+                      </td>
+
+                      <!-- Delete button -->
+                      <td>
+                        <button class="btn btn-sm btn-outline-danger w-100" (click)="removeSubject(i)">
+                          <i class="bi bi-trash"></i> Delete
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+
+                </table>
+              </div>
             </div>
           </form>
         </div>
@@ -198,20 +308,20 @@
         <!-- Footer Buttons -->
         <div class="d-flex justify-content-center gap-3">
           <button *ngIf="studentRegi && !isViewOnly" class="btn btn-primary" style="width: 100px;"
-            (click)="saveWithFile()" type="submit">Submit</button>
+            (click)="saveWithFileAndMarks()" type="submit">Submit</button>
           <button *ngIf="!studentRegi && !isViewOnly" class="btn btn-primary" style="width: 100px;"
             (click)="updateStudent()" type="submit">Update</button>
           <button *ngIf="studentRegi && !isViewOnly" class="btn btn-primary" style="width: 100px;"
             (click)="CloseDialog()">Cancel</button>
           <button *ngIf="!studentRegi && !isViewOnly" class="btn btn-primary" style="width: 100px;"
-            (click)="CloseDialog()">Cancel</button> 
-            <button *ngIf="isViewOnly" class="btn btn-primary" style="width: 100px;"
+            (click)="CloseDialog()">Cancel</button>
+          <button *ngIf="isViewOnly" class="btn btn-primary" style="width: 100px;"
             (click)="exportExcel(student.studentID)">Download</button>
           <button *ngIf="isViewOnly" class="btn btn-secondary" style="width: 100px;"
             (click)="CloseDialog()">Close</button>
-            
+
         </div>
-        
+
 
       </p-dialog>
     </div>
@@ -233,7 +343,6 @@
           <th>Phone Number</th>
           <th>Email</th>
           <th>Address</th>
-          <th>File Name</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -246,20 +355,20 @@
           <td>{{ student.gender }}</td>
           <td>{{ student.nrcNo }}</td>
           <td>{{ student.grade }}</td>
-          <td>{{ student.nationality }}</td>
+          <td><span *ngIf="student.nationality">{{ student.nationality }}</span>
+            <span *ngIf="!student.nationality" class="text-muted">N/A</span>
+          </td>
           <td>{{ student.phoneNumber }}</td>
           <td>{{ student.email }}</td>
-          <td>{{ student.address }}</td>
-          <td>
-            <span *ngIf="student.fileData">{{ student.fileName }}</span>
-            <span *ngIf="!student.fileData" class="text-muted">N/A</span>
+          <td><span *ngIf="student.address">{{ student.address }}</span>
+            <span *ngIf="!student.address" class="text-muted">N/A</span>
           </td>
           <td class="text-center">
             <div class="d-flex justify-content-center gap-2">
-              <button class="btn btn-sm btn-warning" (click)="editStudent(student)">
+              <button class="btn btn-sm btn-warning" title="Edit Student" (click)="editStudent(student)">
                 <i class="bi bi-pencil-square"></i> Edit
               </button>
-              <button class="btn btn-sm btn-danger" (click)="openDeleteDialog(student)">
+              <button class="btn btn-sm btn-danger" title="Delete Student" (click)="openDeleteDialog(student)">
                 <i class="bi bi-trash"></i> Delete
               </button>
             </div>
@@ -274,9 +383,8 @@
     <p>Are you sure you want to delete student "{{ studentToDelete?.studentName }}"?</p>
     <p-footer>
       <div class="d-flex justify-content-center gap-2">
-        <button pButton type="button" label="No" outlined severity="info"
-          (click)="displayDeleteDialog = false"></button>
-        <button pButton type="button" label="Yes" outlined severity="danger" (click)="confirmDelete()"></button>
+        <button class="btn btn-outline-primary" (click)="displayDeleteDialog = false">No</button>
+        <button class="btn btn-outline-danger" (click)="confirmDelete()">Yes</button>
       </div>
     </p-footer>
   </p-dialog>
@@ -286,16 +394,16 @@
 
   <!-- Pagination Controls -->
   <div class="d-flex justify-content-center gap-2 mt-2">
-    <button class="btn btn-primary btn-sm" (click)="previous()" [disabled]="start === 0 || allView">Previous</button>
+    <button class="btn btn-primary btn-sm" (click)="previous()" [disabled]="offset === 0 || allView">Previous</button>
     <button class="btn btn-primary btn-sm" (click)="next()">Next</button>
     <button class="btn btn-primary btn-sm" (click)="viewAll()">{{ allView ? 'Paginated View' : 'View All' }}</button>
   </div>
 
   <!-- Page Info -->
   <div class="text-center mt-2">
-    <small *ngIf="!allView">Showing {{ start + 1 }} to {{ Math.min(start + pageSize, totalRecords) }} of {{ totalRecords
-      }} students</small>
-    <small *ngIf="allView">Showing all {{ totalRecords }} students</small>
+    <small *ngIf="totalRecords === 0">No records found.</small>
+    <small *ngIf="!allView && totalRecords > 0">Showing {{ studentList.length }} students of total {{ totalRecords
+      }}</small>
+    <small *ngIf="allView ">Showing all {{ totalRecords }} students</small><br>
   </div>
-
 </div>

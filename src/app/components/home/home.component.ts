@@ -86,23 +86,29 @@ onFileSelected(event: any) {
   //     }
   //   });
   // }
-  saveWithFile() {
-    if (!this.student.studentName || !this.student.fatherName || !this.student.email) {
-      console.log(this.student.studentName);
-      console.log("Please fill in all required fields.");
-      return;
-    }
-    this.commonService.saveWithFile(this.student,this.selectedFile).subscribe((response: any) => {
-      if (response) {
-        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Student Saved successfully!', life: 3000 });
-        this.student = new Student();
-        this.router.navigate(['/student/list']);
-      } else {
-        this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Can not Saved!', life: 3000 });
+  // saveWithFile() {
+  //   if (!this.student.studentName || !this.student.fatherName || !this.student.email) {
+  //     console.log(this.student.studentName);
+  //     console.log("Please fill in all required fields.");
+  //     return;
+  //   }
+    
+  //   // 3️⃣ Prepare FormData
+  //   const formData = new FormData();
+  //   formData.append('student', new Blob([JSON.stringify(this.student)], { type: 'application/json' }));
+  //   if (this.selectedFile) { formData.append('file', this.selectedFile); }
+
+  //   this.commonService.saveWithFile(formData).subscribe((response: any) => {
+  //     if (response) {
+  //       this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Student Saved successfully!', life: 3000 });
+  //       this.student = new Student();
+  //       this.router.navigate(['/student/list']);
+  //     } else {
+  //       this.messageService.add({ severity: 'error', summary: 'Failed', detail: 'Can not Saved!', life: 3000 });
        
-      }
-    });
-  }
+  //     }
+  //   });
+  // }
 
   // editStudent(){ 
   //   if(!this.student.studentID){
